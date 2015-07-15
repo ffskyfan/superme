@@ -37,6 +37,9 @@
                             <div class="col-md-4 well well-sm  pre-scrollable"  >
                                 @foreach ($breads as $idx=>$bread)
                                     <div>
+
+                                        <img src="/image/{{ $bread['image'] }}" >
+
                                         <input  type="checkbox"   name="servers[]" value="{{$idx}}"/>
                                         <span   class="label  label-info">{{$bread['title']}}</span>
                                         <span   class="label  label-danger">{{$bread['exp']}}</span>
