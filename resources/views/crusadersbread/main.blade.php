@@ -31,36 +31,77 @@
                         @endif
 
 
-                        <form class="form-horizontal" role="form"  method="post" action="/deploy/deploy">
-                            <input type="hidden" name="_token" value="{{ csrf_token() }}">
+                            <form class="form-horizontal" role="form"  method="post" action="/deploy/deploy">
+                                <input type="hidden" name="_token" value="{{ csrf_token() }}">
 
-                            <div class="col-md-4 well well-sm  pre-scrollable"  >
-                                @foreach ($breads as $idx=>$bread)
-                                    <div>
+                                <div class="form-group ">
+                                    <div class="col-md-12  well "  >
+                                        @foreach ($breads as $idx=>$bread)
+                                            @if($idx/3==0)
+                                                <div class="row">
+                                            @endif
 
-                                        <img src="/image/{{ $bread['image'] }}" >
 
-                                        <input  type="checkbox"   name="servers[]" value="{{$idx}}"/>
-                                        <span   class="label  label-info">{{$bread['title']}}</span>
-                                        <span   class="label  label-danger">{{$bread['exp']}}</span>
-                                        <span   class="label  label-success">{{$bread['great']}}</span>
+                                                <div class="col-md-2">
+                                                    <div class="row">
+                                                        <img class="center-block" src="/image/{{ $bread['image'] }}" >
+                                                    </div>
 
+                                                    <div class="row input-group input-group-sm">
+                                                        <div class="col-md-4">
+                                                            </div>
+
+                                                        <span class="input-group-btn ">
+                                                            <button class="btn btn-default" type="button">
+                                                                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                                            </button>
+                                                        </span>
+
+                                                        <input   type="text" class="form-control" name="{{$idx}}"/>
+
+                                                        <span class="input-group-btn ">
+                                                            <button class="btn btn-default" type="button">
+                                                                <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+                                                            </button>
+                                                        </span>
+
+                                                        <div class="col-md-4">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                            @if($idx/3==0)
+                                                </div>
+                                            @endif
+                                        @endforeach
                                     </div>
-                                @endforeach
-                            </div>
+                                </div>
 
 
-                            <div class="col-md-4 ">
+
+                                <div class="form-group  ">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-addon" id="sizing-addon1">需求点数</span>
+                                        <input type="text" class="form-control" placeholder="" aria-describedby="sizing-addon1">
+                                    </div>
+
+                                </div>
+
+
+                                <div class="form-group ">
+                                    <div class="col-md-12  well "  >
+                                        </div>
+                                </div>
+
 
                                 <div class="form-group">
-                                    <div class="col-md-6 col-md-offset-4">
+                                    <div class="col-md-12 col-md-offset-5">
                                         <button type="submit" class="btn btn-primary">
                                             开始计算
                                         </button>
                                     </div>
                                 </div>
 
-                            </div>
 
 
                         </form>
