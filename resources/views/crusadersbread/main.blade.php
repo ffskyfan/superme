@@ -24,7 +24,7 @@
         <div class="row">
             <div class="col-md-8 col-md-offset-2">
                 <div class="panel panel-default">
-                    <div class="panel-heading">部署选项</div>
+                    <div class="panel-heading">面包计算器</div>
                     <div class="panel-body">
 
                         @if (count($errors) > 0)
@@ -58,23 +58,22 @@
                                                 <div class="col-md-2" >
                                                     <div class="row ">
                                                         <!--class="center-block"-->
-                                                        <div class="center-block">
-                                                        <img id="{{$bread_name}}"  src="/image/{{ $bread['image'] }}" >
+                                                        <img class="center-block" id="{{$bread_name}}"  src="/image/{{ $bread['image'] }}" >
 
-                                                        <span   class="label  label-info ">{{$bread['great']}}</span>
+                                                        <!--<span   class="label  label-info ">{{$bread['great']}}</span>
                                                         <span   class="label  label-warning ">{{$bread['exp']}}</span>
-                                                            </div >
+                                                        -->
 
                                                     </div>
 
 
                                                     <div class="row input-group input-group-sm">
                                                         <div class="col-md-4">
-                                                            </div>
+                                                        </div>
 
                                                         <span class="input-group-btn ">
-                                                            <button class="btn btn-default" type="button" onclick="add_bread_number('{{ $bread_name }}')">
-                                                                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+                                                            <button class="btn btn-default" type="button" onclick="reduce_bread_number('{{ $bread_name }}')">
+                                                                <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
                                                             </button>
                                                         </span>
 
@@ -84,10 +83,11 @@
                                                         <input type="hidden" id="{{$bread_name}}_image" value="{{ $bread['image'] }}">
 
                                                         <span class="input-group-btn ">
-                                                            <button class="btn btn-default" type="button" onclick="reduce_bread_number('{{ $bread_name }}')">
-                                                                <span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+                                                            <button class="btn btn-default" type="button" onclick="add_bread_number('{{ $bread_name }}')">
+                                                                <span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
                                                             </button>
                                                         </span>
+
 
                                                         <div class="col-md-4">
                                                         </div>
@@ -102,14 +102,22 @@
                                 </div>
 
 
-
                                 <div class="form-group  ">
                                     <div class="input-group input-group-sm">
-                                        <span class="input-group-addon" id="sizing-addon1">需求点数</span>
-                                        <input id="exp_need" type="number" value="0" class="form-control" placeholder="" aria-describedby="sizing-addon1">
+                                        <span class="input-group-addon" id="sizing-addon1">已有点数</span>
+                                        <input id="exp_had" type="number" value="0" class="form-control" placeholder="" aria-describedby="sizing-addon1">
                                     </div>
 
                                 </div>
+
+                                <div class="form-group  ">
+                                    <div class="input-group input-group-sm">
+                                        <span class="input-group-addon" id="sizing-addon1">最大点数</span>
+                                        <input id="exp_max" type="number" value="0" class="form-control" placeholder="" aria-describedby="sizing-addon1">
+                                    </div>
+
+                                </div>
+
 
 
                                 <div class="form-group "  >

@@ -6,16 +6,20 @@ BREAD_COUNT_EACH_GROUP = 6;
 
 CRITICAL_POINT_MAX = 100;
 
-//因为我们的计算是越接近0越好，所以越接近0的权值越好
-ZERO_OVERFLOW_WEIGHT            = 0.2;
-POSITIVE_OVERFLOW_WEIGHT        = 0.6;
-NEGATIVE_OVERFLOW_WEIGHT        = 0.9;
-EXP_WIGHT                       = 1000.0;      //经验的权重
-EXP_WIGHT_AFTER_CRITICAL_FULL   = 0.01;      //经验在暴击满了之后的权重
-CRITICAL_WIGHT                  = 0.01;  //暴击的权重
-CRITICAL_WIGHT_AFTER_FULL       = 100;   //暴击的满了以后的权重
-EXP_MULTI                       = 1;    //经验的倍率
-EXP_MULTI_AFTER_FULL            = 1.5;  //暴击的满了以后的经验倍率
+ZERO_CRITICAL_OVERFLOW_WEIGHT       = 0;
+POSITIVE_CRITICAL_OVERFLOW_WEIGHT   = 0.2;
+NEGATIVE_CRITICAL_OVERFLOW_WEIGHT   = 0.1;
+
+ZERO_EXP_OVERFLOW_WEIGHT            = 0;
+POSITIVE_EXP_OVERFLOW_WEIGHT        = 0.2;
+NEGATIVE_EXP_OVERFLOW_WEIGHT        = 0.1;
+
+
+EXP_MULTI                           = 1;    //经验的倍率
+EXP_MULTI_AFTER_FULL                = 1.5;  //暴击的满了以后的经验倍率
+
+
+
 
 function add_bread_number(bread_name)
 {
@@ -73,70 +77,120 @@ function compute_exp(all_breads, eaten_bread)
 
 }
 
-function compute_weight(bread, critical_point,  exp_added, exp_need)
+function compute_weight(bread, critical_point,  exp_added, exp_need, times)
 {
-    var exp_wight = EXP_WIGHT; //经验的权重
-    var critical_wight = CRITICAL_WIGHT;//暴击的权重
-
     var exp_multi = EXP_MULTI;
     if (critical_point >= CRITICAL_POINT_MAX) {
         exp_multi = EXP_MULTI_AFTER_FULL;
-        exp_wight = EXP_WIGHT_AFTER_CRITICAL_FULL;
-        critical_wight = CRITICAL_WIGHT_AFTER_FULL;//如果暴击值已经吃够100，那暴击尽量不要加，权重为负数
     }
 
     var left_critical_point = CRITICAL_POINT_MAX - critical_point;
-    var left_exp = exp_need - (exp_added * exp_multi);
+    var left_exp = exp_need - exp_added;
 
-    var critical_overflow = left_critical_point - bread.critical; //暴击溢出值，正数时，越接近0越好， 负数时，越接近0越好， 但是，正数的权重比负数低，就是说吃超了也比没吃满强
+    var critical_overflow = left_critical_point - bread.critical; //暴击溢出值，正数时，越接近0越好， 负数时，越接近0越好， 但是，正数的权重比负数差，就是说吃超了也比没吃满强
     var critical_overflow_weight = 0;
-    if(critical_overflow>0){
-        critical_overflow_weight = critical_overflow * POSITIVE_OVERFLOW_WEIGHT * critical_wight ;
-    }else if(critical_overflow==0){
-        critical_overflow_weight =  critical_overflow * ZERO_OVERFLOW_WEIGHT * critical_wight;
-    }else{
-        critical_overflow_weight = Math.abs(critical_overflow) * NEGATIVE_OVERFLOW_WEIGHT * critical_wight;
+    if (critical_overflow > 0) {
+        critical_overflow_weight =   POSITIVE_CRITICAL_OVERFLOW_WEIGHT ;
+    } else if (critical_overflow == 0) {
+        critical_overflow_weight = ZERO_CRITICAL_OVERFLOW_WEIGHT ;
+    } else {
+        critical_overflow_weight = NEGATIVE_CRITICAL_OVERFLOW_WEIGHT ;
     }
 
-    var exp_overflow = left_exp - bread.exp; //经验溢出值，正数时，越接近0越好， 负数时，越接近0越好， 但是，正数的权重比负数低，就是说吃超了也比没吃满强
+    var final_critical_weight  = 0 ;
+    if(left_critical_point == 0){
+        final_critical_weight = 0;
+        //final_critical_weight = (Math.abs(critical_overflow)/CRITICAL_POINT_MAX) * critical_overflow_weight ;
+    }else{
+        final_critical_weight = (Math.abs(critical_overflow)/left_critical_point) * critical_overflow_weight ;
+    }
+
+
+
+    var exp_overflow = left_exp - (bread.exp*exp_multi); //经验溢出值，正数时，越接近0越好， 负数时，越接近0越好， 但是，正数的权重比负数差，就是说吃超了也比没吃满强
     var exp_overflow_weight = 0;
     if(exp_overflow>0){
-        exp_overflow_weight = exp_overflow * POSITIVE_OVERFLOW_WEIGHT * exp_wight;
+        exp_overflow_weight = POSITIVE_EXP_OVERFLOW_WEIGHT ;
     }else if(exp_overflow==0){
-        exp_overflow_weight =  exp_overflow * ZERO_OVERFLOW_WEIGHT * exp_wight;
+        exp_overflow_weight = ZERO_EXP_OVERFLOW_WEIGHT ;
     }else{
-        exp_overflow_weight = Math.abs(exp_overflow) * NEGATIVE_OVERFLOW_WEIGHT * exp_wight;
+        exp_overflow_weight =  NEGATIVE_EXP_OVERFLOW_WEIGHT ;
     }
+    var final_exp_weight =  (Math.abs(exp_overflow)/left_exp) * exp_overflow_weight ;
 
-    var weight = critical_overflow_weight*exp_overflow_weight;
+    var weight = {'critical':final_critical_weight,'exp':final_exp_weight};
     return weight;
 }
 
-function find_best_bread(all_breads, bread_type_count, exp_need, critical_point, exp_added)
-{
-    var prepare_eat_bread_idx = 0;
 
+function find_lowest_critical_weight_breads(all_weight)
+{
+    var critical_breads = {};
+    for (var idx in all_weight){
+        var weight = all_weight[idx];
+
+        if(critical_breads[weight.critical]==null){
+            critical_breads[weight.critical] =[];
+        }
+
+        critical_breads[weight.critical].push(idx);
+    }
+
+    var critical_keys = [];
+    for (var critical in critical_breads) {
+        if (critical_breads.hasOwnProperty(critical)) {
+            critical_keys.push(critical);
+        }
+    }
+    critical_keys.sort();
+
+    var lowest_critical_key = critical_keys[0];
+    var lowest_critical_breads = critical_breads[lowest_critical_key];
+
+    return lowest_critical_breads;
+}
+
+function sort_exp_weight(a,b)
+{
+    return parseFloat(a) -parseFloat(b);
+}
+
+function find_best_bread(all_breads, bread_type_count, exp_need, critical_point, exp_added, times)
+{
+    var all_weight = {}
     for(var i=1; i<=bread_type_count; i++) {
 
         var bread = all_breads[i];
         if(bread.count == 0) continue;
 
-        if(prepare_eat_bread_idx == 0) {
-            prepare_eat_bread_idx = i;
-            continue;
-        }
-
-        var prepare_eat_bread = all_breads[prepare_eat_bread_idx];
-        var prepare_eat_bread_weight = compute_weight(prepare_eat_bread, critical_point,  exp_added, exp_need);
-
-        var bread_weight = compute_weight(bread, critical_point,  exp_added, exp_need);
-
-        if(bread_weight < prepare_eat_bread_weight ){
-            prepare_eat_bread_idx = i;
-        }
+        var bread_weight = compute_weight(bread, critical_point,  exp_added, exp_need, times);
+        all_weight[i] = bread_weight;
     }
 
-    return prepare_eat_bread_idx;
+    var lowest_critical_breads = find_lowest_critical_weight_breads(all_weight);
+
+    var lowest_exp_weight_breads = {}
+    for(var idx in lowest_critical_breads){
+        var bread_idx = lowest_critical_breads[idx];
+        var weight = all_weight[bread_idx];
+        if(lowest_exp_weight_breads[weight.exp]==null){
+            lowest_exp_weight_breads[weight.exp] =[];
+        }
+
+        lowest_exp_weight_breads[weight.exp].push(bread_idx);
+    }
+
+    var exp_keys = [];
+    for (var exp in lowest_exp_weight_breads) {
+        if (lowest_exp_weight_breads.hasOwnProperty(exp)) {
+            exp_keys.push(exp);
+        }
+    }
+    exp_keys.sort(sort_exp_weight);
+
+    var best_bread_idx = lowest_exp_weight_breads[exp_keys[0]][0];
+
+    return best_bread_idx;
 }
 
 
@@ -149,7 +203,7 @@ function find_optimal_group(all_breads, bread_type_count, exp_need, eaten_breads
         if(all_exp >= exp_need) break;
 
         var exp_added = compute_exp(all_breads, eaten_breads);
-        var best_bread_idx = find_best_bread(all_breads, bread_type_count, exp_need, critical_point, exp_added);
+        var best_bread_idx = find_best_bread(all_breads, bread_type_count, exp_need, critical_point, exp_added, i);
 
         var bread = all_breads[best_bread_idx];
         bread.count--;
@@ -186,10 +240,16 @@ function find_optimal_solution(all_breads, bread_type_count, exp_need)
 }
 
 
-function show_result(all_breads, eaten_breads)
+function show_result(all_breads, eaten_breads, exp_need)
 {
     var bread_count = eaten_breads.length;
     var compute_times = Math.ceil(bread_count/BREAD_COUNT_EACH_GROUP);
+
+    var result_need_exp_id = 'result_need_exp';
+    var result_need_exp_str = '<div class="row  well "  id="' +result_need_exp_id +'"></div>';
+    $("div#result").append(result_need_exp_str);
+    var result_need_exp_text = ' <span   class="label  label-default ">需求经验:'+String(exp_need)+'</span>';
+    $("div#"+result_need_exp_id).prepend(result_need_exp_text);
 
     for(var i=0; i<compute_times; i++){
 
@@ -206,11 +266,11 @@ function show_result(all_breads, eaten_breads)
             var img_str = '<img  src="/image/'+bread.image+'" >';
             $("div#"+result_group_id).append(img_str);
 
-            var critical_span_str = '<span   class="label  label-info ">'+bread.critical+'</span>';
-            $("div#"+result_group_id).append(critical_span_str);
-
             var exp_span_str = '<span   class="label  label-warning ">'+bread.exp+'</span>';
             $("div#"+result_group_id).append(exp_span_str);
+
+            var critical_span_str = '<span   class="label  label-info ">'+bread.critical+'</span>';
+            $("div#"+result_group_id).append(critical_span_str);
 
             critical += bread.critical;
             exp += bread.exp;
@@ -220,10 +280,17 @@ function show_result(all_breads, eaten_breads)
             exp = exp*1.5;
         }
 
-        var result_group_text = "经验:"+String(exp)+";暴击:"+String(critical);
-        $("div#"+result_group_id).append(result_group_text);
-
+        var result_group_text = ' <span   class="label  label-default ">经验:'+String(exp)+'   暴击:'+String(critical)+'</span>';
+        $("div#"+result_group_id).prepend(result_group_text);
     }
+
+    var result_summarize_id = 'result_group_summarize';
+    var div_summarize_str = '<div class="row  well "  id="' +result_summarize_id +'"></div>';
+    $("div#result").append(div_summarize_str);
+
+    var all_exp = compute_exp(all_breads, eaten_breads)
+    var result_group_text = ' <span   class="label  label-default ">总计：经验:'+String(all_exp)+'</span>';
+    $("div#"+result_summarize_id).prepend(result_group_text);
 
 
 }
@@ -248,6 +315,7 @@ function compute_bread()
         var bread_image =  $("input#"+id+"_image:hidden").val() ;
 
         all_breads[i] = {};
+        all_breads[i].idx       =  i;
         all_breads[i].count     =  bread_count;
         all_breads[i].exp       =  bread_exp;
         all_breads[i].critical  =  bread_critical;
@@ -255,13 +323,19 @@ function compute_bread()
     }
     console.log(all_breads);
 
-    var exp_need = $("input#exp_need.form-control").val();
+    var exp_had = $("input#exp_had.form-control").val();
+    console.log(exp_had)
+
+    var exp_max = $("input#exp_max.form-control").val();
+    console.log(exp_max)
+
+    var exp_need = exp_max-exp_had;
     console.log(exp_need)
 
     var solution = find_optimal_solution(all_breads, bread_type_count, exp_need);
     console.log(solution);
 
-    show_result(all_breads, solution);
+    show_result(all_breads, solution, exp_need);
 
 }
 
