@@ -18,6 +18,7 @@ NEGATIVE_EXP_OVERFLOW_WEIGHT        = 0.1;
 EXP_MULTI                           = 1;    //经验的倍率
 EXP_MULTI_AFTER_FULL                = 1.5;  //暴击的满了以后的经验倍率
 
+EXP_THRESHOLD_WHEN_CRITICAL_FULL    = 150;  //当暴击满的时候使用经验的阀值
 
 
 
@@ -99,8 +100,11 @@ function compute_weight(bread, critical_point,  exp_added, exp_need, times)
 
     var final_critical_weight  = 0 ;
     if(left_critical_point == 0){
-        final_critical_weight = 0;
-        //final_critical_weight = (Math.abs(critical_overflow)/CRITICAL_POINT_MAX) * critical_overflow_weight ;
+        if(bread.exp >= EXP_THRESHOLD_WHEN_CRITICAL_FULL){//如果经验值超过阀值，那就正常计算，这样可以不使用价值较高的面包
+            final_critical_weight = (Math.abs(critical_overflow)/left_critical_point) * critical_overflow_weight ;
+        }else{
+            final_critical_weight = 0;
+        }
     }else{
         final_critical_weight = (Math.abs(critical_overflow)/left_critical_point) * critical_overflow_weight ;
     }
@@ -116,7 +120,7 @@ function compute_weight(bread, critical_point,  exp_added, exp_need, times)
     }else{
         exp_overflow_weight =  NEGATIVE_EXP_OVERFLOW_WEIGHT ;
     }
-    var final_exp_weight =  (Math.abs(exp_overflow)/left_exp) * exp_overflow_weight ;
+    var final_exp_weight = (Math.abs(exp_overflow)/left_exp) * exp_overflow_weight ;
 
     var weight = {'critical':final_critical_weight,'exp':final_exp_weight};
     return weight;
